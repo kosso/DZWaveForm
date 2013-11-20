@@ -4,10 +4,10 @@
 #
 version: 0.1
 apiversion: 2
-description: My module
-author: Your Name
-license: Specify your license
-copyright: Copyright (c) 2013 by Your Company
+description: Titanium module to create a waveform image from an audio file.
+author: Nikhil Nigade (and Kosso)
+license: MIT
+copyright: 2013
 
 
 # these should not be edited

@@ -37,11 +37,11 @@ win.addEventListener("open", function() {
 
 	var file1 = Ti.Filesystem.getFile(Ti.Filesystem.resourcesDirectory+"/test1.m4a");
 	var file2 = Ti.Filesystem.getFile(Ti.Filesystem.resourcesDirectory+"/test2.m4a");
-	var file3 = Ti.Filesystem.getFile(Ti.Filesystem.resourcesDirectory+"/test3.m4a");
+	var file3 = Ti.Filesystem.getFile(Ti.Filesystem.resourcesDirectory+"/test4_audio_silence_audio.m4a");
 	
-	imageView1.image = DZWaveForm.analyze(file1.resolve()); //Synchronous.
-	imageView2.image = DZWaveForm.analyze(file2.resolve()); //Synchronous.
-	imageView3.image = DZWaveForm.analyze(file3.resolve()); //Synchronous.
+	imageView1.image = DZWaveForm.analyze(file1.resolve(), false); // boolean is useLogarithmic or not
+	imageView2.image = DZWaveForm.analyze(file2.resolve(), true); //Synchronous.
+	imageView3.image = DZWaveForm.analyze(file3.resolve(), false); //Synchronous.
 
 	/*if(image) {
 		imageView.setImage(image);
