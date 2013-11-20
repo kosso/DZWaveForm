@@ -15,6 +15,9 @@
 #define decibel(amplitude) (20.0 * log10(absX(amplitude)/32767.0))
 #define imgExt @"png"
 #define imageToData(x) UIImagePNGRepresentation(x)
+// testing method from https://github.com/fulldecent/FDWaveformView/blob/master/FDWaveformView/FDWaveformView.m
+#define targetOverDraw 3 // Will make image that is more pixels than screen can show
+#define minimumOverDraw 2
 
 @implementation ComDezinezyncWaveformModule
 
@@ -442,6 +445,52 @@
 }
 
 
+// From : https://github.com/fulldecent/FDWaveformView/blob/master/FDWaveformView/FDWaveformView.m
+
+#define plotChannelOneColor [[UIColor blackColor] CGColor]
+
+-(UIImage *) plotLogGraph:(Float32 *) samples
+             maximumValue:(Float32) normalizeMax 
+             mimimumValue:(Float32) normalizeMin 
+              sampleCount:(NSInteger) sampleCount 
+              imageHeight:(float) imageHeight {
+
+    // TODO: switch to a synchronous function that paints onto a given context
+    CGSize imageSize = CGSizeMake(sampleCount, imageHeight);
+    UIGraphicsBeginImageContext(imageSize); // this is leaking memory?
+    CGContextRef context = UIGraphicsGetCurrentContext();
+    CGContextSetAlpha(context,1.0);
+    CGContextSetLineWidth(context, 1.0);
+    CGContextSetStrokeColorWithColor(context, plotChannelOneColor);
+    
+    float halfGraphHeight = (imageHeight / 2);
+    float centerLeft = halfGraphHeight;
+    float sampleAdjustmentFactor = imageHeight / (normalizeMax - noiseFloor) / 2;
+    
+    for (NSInteger intSample=0; intSample<sampleCount; intSample++) {
+        Float32 sample = *samples++;
+        float pixels = (sample - noiseFloor) * sampleAdjustmentFactor;
+        CGContextMoveToPoint(context, intSample, centerLeft-pixels);
+        CGContextAddLineToPoint(context, intSample, centerLeft+pixels);
+        CGContextStrokePath(context);
+    }
+
+    UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsBeginImageContext(image.size);
+    CGRect drawRect = CGRectMake(0, 0, image.size.width, image.size.height);
+    [image drawInRect:drawRect];
+    [[UIColor blueColor] set];
+    UIRectFillUsingBlendMode(drawRect, kCGBlendModeSourceAtop);
+    
+    UIImage *tintedImage = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    NSLog(@"[INFO] FDWaveformView: done rendering PNG W=%f H=%f", image.size.width, image.size.height);
+    
+    return tintedImage;
+
+}
+
+
 -(UIImage *)renderPNGAudioPictogramLogForAsset:(AVURLAsset *)songAsset {
     
     NSError *error = nil;
@@ -593,12 +642,21 @@
     
     if (reader.status == AVAssetReaderStatusCompleted){
         // You're done. It worked.
-        
+
+        /*        
         finalImage = [self audioImageLogGraph:(Float32 *) fullSongData.bytes
                                     normalizeMax:normalizeMax
                                      sampleCount:fullSongData.length / (sizeof(Float32) * 2)
                                     channelCount:channelCount // Not working correctly. Works OK when forced to 2, even if source is mono (1).
                                      imageHeight:100];
+        */
+        finalImage = [self plotLogGraph:(Float32 *) fullSongData.bytes
+                                    maximumValue:normalizeMax
+                                    mimimumValue:noiseFloor
+                                     sampleCount:fullSongData.length / (sizeof(Float32) * 2)
+                                     imageHeight:100];
+
+                                    // channelCount:channelCount // Not working correctly. Works OK when forced to 2, even if source is mono (1).
 
     }
     
@@ -607,5 +665,11 @@
     
     return finalImage;
 }
+
+
+
+
+
+
 
 @end
